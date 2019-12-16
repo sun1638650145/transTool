@@ -1,6 +1,6 @@
  #
  # client.py
- # socket/client
+ # client
  #
  # Created by 孙瑞琦 on 2019/12/15.
  # Copyright © 2019 孙瑞琦. All rights reserved.
@@ -15,7 +15,7 @@ host = input('请输入要连接到服务器：')
 port = 10000
 
 # 创建套接字
-s = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM, proto=socket.IPPROTO_TCP)
+s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
 # 连接服务器
 try:
@@ -37,7 +37,6 @@ else:
     print('文件不存在请检查！')
     sys.exit(1)
 # 断开连接
-# 这其实就是一个废步骤
 s.shutdown(1)
 # 关闭套接字
 s.close()
