@@ -15,7 +15,7 @@ host = input('请输入要连接到服务器：')
 port = 10000
 
 # 创建套接字
-s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # 连接服务器
 try:

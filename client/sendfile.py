@@ -17,12 +17,27 @@ def senddata(socket, filepath, checkpoint=0):
     fp = open(filepath, 'rb')
     fp.seek(checkpoint)
 
+    # 进度显示
+    filesize = os.stat(filepath).st_size
+    if checkpoint == 0:
+        percent = 0.0
+    else:
+        percent = checkpoint * 1.0 / filesize
+    if filesize < 1024:
+        onepercent = 1.0
+    else:
+        onepercent = 1024.0 / filesize
+
     while True:
         data = fp.read(1024)
         if not data:
             print('{0}文件发送成功！'.format(os.path.basename(filepath)))
             break
         socket.send(data)
+        percent += onepercent
+        # 输出进度
+        sys.stdout.write('\r%.4f%%' %(percent * 100))
+        sys.stdout.flush()
 
 def sendfile(socket, filepath):
     """使用sendfile函数传输文件"""
