@@ -8,21 +8,55 @@
 
 import os
 import struct
+import hashlib
+
+def computefilemd5(filepath):
+    """计算文件的md5值"""
+
+    hash = hashlib.md5()
+    fp = open(filepath, 'rb')
+    while True:
+        b = fp.read(4096)
+        if not b:
+            break
+        hash.update(b)
+    fp.close()
+
+    return hash.hexdigest()
+
+def checkfilemd5(socket, savepath):
+    """校验文件的md5"""
+
+    checkmd5 = struct.calcsize('32si')
+
+    # 接收md5 将byte转换回string
+    recvmd5 = socket.recv(checkmd5)
+    recvmd5 = recvmd5.decode('utf-8')
+
+    # 计算接收文件的md5值
+    localmd5 = computefilemd5(savepath)
+
+    # 检验md5值
+    for i in range(len(localmd5)):
+        if localmd5[i] != recvmd5[i]:
+            return False
+
+    return True
 
 def computesize(fn, byte):
     """计算大小"""
 
     if byte * 1.0 / 1e9 > 1:
         Gb = byte * 1.0 / 1e9
-        print('传输的文件名是{0}，文件大小是{1}GB'.format(str(fn), Gb))
+        print('INFO:传输的文件名是{0}，文件大小是{1}GB'.format(str(fn), Gb))
     elif byte * 1.0 / 1e6 > 1:
         Mb = byte * 1.0 / 1e6
-        print('传输的文件名是{0}，文件大小是{1}MB'.format(str(fn), Mb))
+        print('INFO:传输的文件名是{0}，文件大小是{1}MB'.format(str(fn), Mb))
     elif byte * 1.0 / 1e3 > 1:
         Kb = byte * 1.0 / 1e3
-        print('传输的文件名是{0}，文件大小是{1}KB'.format(str(fn), Kb))
+        print('INFO:传输的文件名是{0}，文件大小是{1}KB'.format(str(fn), Kb))
     else:
-        print('传输的文件名是{0}，文件大小是{1}Bytes'.format(str(fn), byte))
+        print('INFO:传输的文件名是{0}，文件大小是{1}Bytes'.format(str(fn), byte))
 
 def computecheckpoint(filepath):
     """计算断点"""
@@ -57,7 +91,7 @@ def recvdata(socket, savepath, filename, filesize, checkpoint=0):
         fp.write(data)
 
     fp.close()
-    print('文件接收成功！')
+    print('INFO:文件接收成功！')
 
 def recvfile(socket, savepath):
     """使用recvfile函数接收文件"""
@@ -74,22 +108,27 @@ def recvfile(socket, savepath):
         computesize(fn, filesize)
 
         if os.path.exists(str(savepath) + str(fn)) and os.stat(str(savepath) + str(fn)).st_size == filesize:
-            s = '文件已经存在'
+            s = 'INFO:文件已经存在'
             s_b = b'exist and full'
             socket.send(s_b)
             print(s)
         elif os.path.exists(str(savepath) + str(fn)) and os.stat(str(savepath) + str(fn)).st_size != filesize:
-            s = '文件已经存在部分，将进行断点续传'
+            s = 'INFO:文件已经存在部分，将进行断点续传'
             s_b = b'exist'
             socket.send(s_b)
 
             # 计算断点
             checkpoint, num = computecheckpoint(str(savepath) + str(fn))
             socket.send(num)
-            print(s)
+            print(s, end='')
             recvdata(socket, savepath, fn, filesize, checkpoint)
         else:
-            print('本地不存在该文件，', end='')
+            print('INFO:本地不存在该文件，', end='')
             s_b = b'not exist'
             socket.send(s_b)
             recvdata(socket, savepath, fn, filesize)
+
+    # 校验md5并发回客户端
+    ans = checkfilemd5(socket, str(savepath) + str(fn))
+    ans = str(ans).encode('utf-8')
+    socket.send(ans)
