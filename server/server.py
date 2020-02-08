@@ -20,9 +20,6 @@ if not os.path.exists(savepath):
 # 创建套接字，bind()函数绑定端口
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# 非阻塞服务器
-# s.setblocking(False)
-
 s.bind((host, port))
 
 # 一直处于监听状态
